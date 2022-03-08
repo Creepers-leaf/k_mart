@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+ 
+    
+    options {
+      buildDiscarder logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '3')
+    }
+    
+    tools {
+        gradle 'Gradle'
+    }
+
+    stages {
+        stage('git') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Creepers-leaf/k_mart.git'
+            }//steps
+        }//stage
+        stage('gradle') {
+            steps {
+                sh "gradle build -x test"
+            }//steps
+        }//stage
+        stage('docker build') {
+            steps{
+                withCredentials([string(credentialsId: 'aacfe705-a721-4efc-807d-906d340a8faa', variable: 'Dockerhub')]){
+                sh " docker login -u doackerrepo -p ${Dockerhub}"
+                }
+
+                sh "docker build -t doackerrepo/kirani_backend:0.0.2 ."
+            }//steps
+        }//stage
+        stage('docker push to repo') {
+            steps{
+                withCredentials([string(credentialsId: 'aacfe705-a721-4efc-807d-906d340a8faa', variable: 'Dockerhub')]){
+                sh " docker login -u doackerrepo -p ${Dockerhub}"
+                }
+                sh "docker push  doackerrepo/kirani_backend:0.0.2"
+             
+            }//steps
+        
+        }//stage
+        
+        
+        
+    }//stages
+}//pipeline
